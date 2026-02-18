@@ -10,11 +10,16 @@ jobs:
   release:
     name: Release
     runs-on: windows-2022
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           submodules: true
+          persist-credentials: false
 
       - name: Add msbuild to PATH
         uses: microsoft/setup-msbuild@v2
@@ -29,7 +34,7 @@ jobs:
 
       - name: Release
         env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: yarn semantic-release
 
 
