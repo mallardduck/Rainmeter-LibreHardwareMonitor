@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 using Rainmeter;
 using System.Management;
 
-namespace RainmeterOHM
+namespace RainmeterLHM
 {
 
     class WMIQuery{
@@ -65,7 +65,7 @@ namespace RainmeterOHM
 
     public class Measure
     {
-        private const string DefaultNamespace = "OpenHardwareMonitor";
+        private const string DefaultNamespace = "LibreHardwareMonitor";
         private const string SensorClass = "Sensor";
         private const string HardwareClass = "Hardware";
         private const string wmiROOT = "root";
