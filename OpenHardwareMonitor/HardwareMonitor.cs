@@ -28,7 +28,7 @@ namespace RainmeterOHM
 
         public void Where(string property, int value)
         {
-            this.Where(property, value+"", "=");
+            this.Where(property, value.ToString(), "=");
         }
 
         public void Where(string property, string value, string op="=") 
@@ -39,25 +39,19 @@ namespace RainmeterOHM
         public ManagementObject GetAt(int index)
         {
             using (ManagementObjectSearcher mos = new ManagementObjectSearcher(new ManagementScope(this.ns), new ObjectQuery(this.ToString())))
-                using (ManagementObjectCollection moc = mos.Get())
+            using (ManagementObjectCollection moc = mos.Get())
+            {
+                int i = 0;
+                foreach (ManagementObject m in moc)
                 {
-                    int i = 0;
-                    foreach (ManagementObject m in moc)
-                    {
-                        try
-                        {
-                            if (index == i)
-                                return m;
+                    if (index == i)
+                        return m;
 
-                            i++;
-                        }
-                        finally
-                        {
-                            m.Dispose();
-                        }
-                    }
-                    return null;
+                    i++;
+                    m.Dispose();
                 }
+                return null;
+            }
         }
 
         override
@@ -103,7 +97,7 @@ namespace RainmeterOHM
 
                 this.sensorValueName = rm.ReadString("SensorValueName", "Value");
 
-                api.Log(API.LogType.Debug, String.Format("Hardware(type, name, index): ({0}, {1}, {2}), Sensor(type, name, index): ({3}, {4}, {5})", hwType, hwName, hwIndex, sType, sName, sIndex));
+                api.Log(API.LogType.Debug, $"Hardware(type, name, index): ({hwType}, {hwName}, {hwIndex}), Sensor(type, name, index): ({sType}, {sName}, {sIndex})");
 
                 this.ns = wmiROOT + "\\" + rm.ReadString("Namespace", DefaultNamespace);
 
@@ -125,7 +119,7 @@ namespace RainmeterOHM
                         return;
                     }
                     hardwareID = (string)hardware.GetPropertyValue("Identifier");
-                    api.Log(API.LogType.Debug, "Hardware Identifier: " + hardwareID.ToString());
+                    api.Log(API.LogType.Debug, "Hardware Identifier: " + hardwareID);
                 }
 
                 WMIQuery sQuery = new WMIQuery(this.ns, SensorClass);
@@ -151,13 +145,13 @@ namespace RainmeterOHM
                             propertyFound = true;
                         }
                     }
-                    if (propertyFound == false) {
+                    if (!propertyFound) {
                         api.Log(API.LogType.Error, "sensor has no value named: " + this.sensorValueName);
                         return;
                     }
 
                     this.sensorID = sensor.GetPropertyValue("Identifier").ToString();
-                    api.Log(API.LogType.Debug, "Sensor Identifier: " + sensorID.ToString());
+                    api.Log(API.LogType.Debug, "Sensor Identifier: " + sensorID);
                 }
             }
             catch (Exception ex)
@@ -198,9 +192,6 @@ namespace RainmeterOHM
 
     public static class Plugin
     {
-#if DLLEXPORT_GETSTRING
-        static IntPtr StringBuffer = IntPtr.Zero;
-#endif
 
         [DllExport]
         public static void Initialize(ref IntPtr data, IntPtr rm)
@@ -212,14 +203,6 @@ namespace RainmeterOHM
         public static void Finalize(IntPtr data)
         {
             GCHandle.FromIntPtr(data).Free();
-            
-#if DLLEXPORT_GETSTRING
-            if (StringBuffer != IntPtr.Zero)
-            {
-                Marshal.FreeHGlobal(StringBuffer);
-                StringBuffer = IntPtr.Zero;
-            }
-#endif
         }
 
         [DllExport]
@@ -241,19 +224,7 @@ namespace RainmeterOHM
         public static IntPtr GetString(IntPtr data)
         {
             Measure measure = (Measure)GCHandle.FromIntPtr(data).Target;
-            if (StringBuffer != IntPtr.Zero)
-            {
-                Marshal.FreeHGlobal(StringBuffer);
-                StringBuffer = IntPtr.Zero;
-            }
-
-            string stringValue = measure.GetString();
-            if (stringValue != null)
-            {
-                StringBuffer = Marshal.StringToHGlobalUni(stringValue);
-            }
-
-            return StringBuffer;
+            return Rainmeter.StringBuffer.Update(measure.GetString());
         }
 #endif
 
