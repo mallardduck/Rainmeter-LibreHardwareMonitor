@@ -1,4 +1,4 @@
-Rainmeter OpenHardwareMonitor Plugin
+Rainmeter LibreHardwareMonitor Plugin
 ===============
 
 This Plugin allowes Rainmeter measures to access the sensor data of [OpenHardwareMonitor](http://openhardwaremonitor.org)/[LibreHardwareMonitor](https://github.com/LibreHardwareMonitor/LibreHardwareMonitor). The data is fetched from WMI.
@@ -19,8 +19,8 @@ This Plugin allowes Rainmeter measures to access the sensor data of [OpenHardwar
 ```ini
 [Measure]  
 Measure=Plugin  
-Plugin=OpenHardwareMonitor.dll
-;Namespace=LibreHardwareMonitor ;use LibreHardwareMonitor
+Plugin=LibreHardwareMonitor.dll
+;Namespace=OpenHardwareMonitor ;use OpenHardwareMonitor
 HardwareType=Mainboard | SuperIO | CPU | GpuNvidia | GpuAti | TBalancer | Heatmaster | HDD | ...
 HardwareName=HardwareName
 HardwareIndex=HardwareIndex
@@ -33,7 +33,7 @@ SensorIndex=SensorIndex
 
 | Parameter | Description | Default |
 | --- | --- | --- |
-| Namespace | WMI namespace | `OpenHardwareMonitor` |
+| Namespace | WMI namespace | `LibreHardwareMonitor` |
 | HardwareType | type of hardware (types: [OHM](https://github.com/openhardwaremonitor/openhardwaremonitor/blob/master/Hardware/IHardware.cs)/[LHM](https://github.com/LibreHardwareMonitor/LibreHardwareMonitor/blob/master/LibreHardwareMonitorLib/Hardware/HardwareType.cs)) | empty string |
 | HardwareName | name of hardware | empty string |
 | HardwareIndex | index of hardware, if multiple devices match the supplied hardware filter | `0` |
@@ -48,13 +48,13 @@ each parameter is **optional**
 
 ### Measure GPU Core Load 
 
-![OpenHardwareMonitor GPU](assets/gpu_core_load.png)
+![LibreHardwareMonitor GPU](assets/gpu_core_load.png)
 
 ```ini
 [GPUCoreLoad]  
 Measure=Plugin  
-Plugin=OpenHardwareMonitor.dll
-;Namespace=LibreHardwareMonitor ;uncomment to use LibreHardwareMonitor
+Plugin=LibreHardwareMonitor.dll
+;Namespace=OpenHardwareMonitor ;uncomment to use OpenHardwareMonitor
 HardwareType=GpuAti
 SensorType=Load
 SensorName=GPU Core
@@ -63,8 +63,8 @@ MaxValue=100
 
 [GPUCoreLoadAlternative]  
 Measure=Plugin  
-Plugin=OpenHardwareMonitor.dll
-;Namespace=LibreHardwareMonitor ;uncomment to use LibreHardwareMonitor
+Plugin=LibreHardwareMonitor.dll
+;Namespace=OpenHardwareMonitor ;uncomment to use OpenHardwareMonitor
 HardwareName=AMD Radeon RX 5700 XT
 SensorType=Load
 SensorName=GPU Core
@@ -76,13 +76,13 @@ MaxValue=100
 
 Usually you have to specify the name of your **Super I/O controller** to monitor sensors on your mainboard. (In my case: Nuvoton NCT6797D)
 
-![OpenHardwareMonitor Mainboard](assets/mainb_fan_rpm.png)
+![LibreHardwareMonitor Mainboard](assets/mainb_fan_rpm.png)
 
 ```ini
 [Fan5RPM]
 Measure=Plugin
-Plugin=OpenHardwareMonitor
-;Namespace=LibreHardwareMonitor ;uncomment to use LibreHardwareMonitor
+Plugin=LibreHardwareMonitor
+;Namespace=OpenHardwareMonitor ;uncomment to use OpenHardwareMonitor
 HardwareName=Nuvoton NCT6797D
 SensorName=Fan #5
 ```
@@ -92,16 +92,16 @@ SensorName=Fan #5
 ```ini
 [CPUPackageTemp]
 Measure=Plugin
-Plugin=OpenHardwareMonitor
-;Namespace=LibreHardwareMonitor ;uncomment to use LibreHardwareMonitor
+Plugin=LibreHardwareMonitor
+;Namespace=OpenHardwareMonitor ;uncomment to use OpenHardwareMonitor
 HardwareName=AMD Ryzen 5 3600
 SensorName=CPU Package
 SensorType=Temperature
 
 [CPUPackageTempMax]
 Measure=Plugin
-Plugin=OpenHardwareMonitor
-;Namespace=LibreHardwareMonitor ;uncomment to use LibreHardwareMonitor
+Plugin=LibreHardwareMonitor
+;Namespace=OpenHardwareMonitor ;uncomment to use OpenHardwareMonitor
 HardwareName=AMD Ryzen 5 3600
 SensorName=CPU Package
 SensorType=Temperature
@@ -109,8 +109,8 @@ SensorValueName=Max
 
 [CPUPackageTempMin]
 Measure=Plugin
-Plugin=OpenHardwareMonitor
-;Namespace=LibreHardwareMonitor ;uncomment to use LibreHardwareMonitor
+Plugin=LibreHardwareMonitor
+;Namespace=OpenHardwareMonitor ;uncomment to use OpenHardwareMonitor
 HardwareName=AMD Ryzen 5 3600
 SensorName=CPU Package
 SensorType=Temperature

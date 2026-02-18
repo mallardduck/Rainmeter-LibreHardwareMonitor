@@ -31,8 +31,8 @@ rmskinOutput.on('close', function() {
 rmskin.pipe(rmskinOutput)
 
 rmskin.file('./RMSKIN.ini', {name: 'RMSKIN.ini'})
-rmskin.directory('./Skins/', 'Skins/OHM')
-rmskin.file('build/x32/Release/OpenHardwareMonitor.dll', {name: 'Plugins/32bit/OpenHardwareMonitor.dll'})
-rmskin.file('build/x64/Release/OpenHardwareMonitor.dll', {name: 'Plugins/64bit/OpenHardwareMonitor.dll'})
+rmskin.directory('./Skins/', 'Skins/LHM')
+rmskin.file('build/x32/Release/LibreHardwareMonitor.dll', {name: 'Plugins/32bit/LibreHardwareMonitor.dll'})
+rmskin.file('build/x64/Release/LibreHardwareMonitor.dll', {name: 'Plugins/64bit/LibreHardwareMonitor.dll'})
 
 rmskin.finalize()
