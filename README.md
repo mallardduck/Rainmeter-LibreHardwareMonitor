@@ -1,7 +1,7 @@
 Rainmeter LibreHardwareMonitor Plugin
 ===============
 
-This Plugin allowes Rainmeter measures to access the sensor data of [OpenHardwareMonitor](http://openhardwaremonitor.org)/[LibreHardwareMonitor](https://github.com/LibreHardwareMonitor/LibreHardwareMonitor). The data is fetched from WMI.
+This Plugin allowes Rainmeter measures to access the sensor data of [OpenHardwareMonitor](http://openhardwaremonitor.org)/[LibreHardwareMonitor](https://github.com/LibreHardwareMonitor/LibreHardwareMonitor). The data is fetched from HTTP.
 
 This project was forked from: https://github.com/abichinger/Rainmeter-HardwareMonitor
 
