@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Runtime.InteropServices;
+using System.Text.Json;
 using System.Web.Script.Serialization;
 using Rainmeter;
 
@@ -268,8 +269,10 @@ namespace RainmeterLHM
             _lastSensorRefresh = DateTime.UtcNow;
             try
             {
-                string dataJson = Http.GetStringAsync(Url + "/data.json").GetAwaiter().GetResult();
-                _sensorCache = ParseSensorValuesFromJson(dataJson);
+                using (var response = Http.GetAsync(Url + "/data.json",
+                    HttpCompletionOption.ResponseHeadersRead).GetAwaiter().GetResult())
+                using (var stream = response.Content.ReadAsStreamAsync().GetAwaiter().GetResult())
+                    _sensorCache = StreamParseSensorValues(stream);
             }
             catch (Exception ex)
             {
@@ -277,6 +280,121 @@ namespace RainmeterLHM
                     "LibreHardwareMonitor: failed to refresh sensor values: " + ex.Message);
             }
         }
+
+        // Reads the HTTP response body as a stream and extracts sensor Value/Min/Max
+        // using Utf8JsonReader — no full-response buffering, no intermediate object graph.
+        //
+        // Strategy: maintain a SensorCandidate slot per nesting depth. On StartObject,
+        // clear the slot. On EndObject, if SensorId was seen, commit to cache. On
+        // PropertyName, flag which field is next. On String, store into the slot.
+        private static Dictionary<string, Dictionary<string, double>> StreamParseSensorValues(Stream stream)
+        {
+            var cache   = new Dictionary<string, Dictionary<string, double>>(StringComparer.Ordinal);
+            var stack   = new SensorCandidate[32]; // LHM tree depth is never more than ~6
+            int depth   = -1;
+            var pending = PendingField.None;
+
+            byte[] buf      = new byte[8192];
+            int leftoverLen = 0;
+            var state       = default(JsonReaderState);
+
+            while (true)
+            {
+                // Grow the buffer if leftover bytes leave too little room for a read.
+                if (leftoverLen + 4096 > buf.Length)
+                {
+                    var grown = new byte[buf.Length * 2];
+                    Array.Copy(buf, grown, leftoverLen);
+                    buf = grown;
+                }
+
+                int bytesRead  = stream.Read(buf, leftoverLen, buf.Length - leftoverLen);
+                int totalBytes = leftoverLen + bytesRead;
+                bool isFinalBlock = bytesRead == 0;
+                if (totalBytes == 0) break;
+
+                var reader = new Utf8JsonReader(
+                    new ReadOnlySpan<byte>(buf, 0, totalBytes), isFinalBlock, state);
+
+                while (reader.Read())
+                {
+                    switch (reader.TokenType)
+                    {
+                        case JsonTokenType.StartObject:
+                            depth++;
+                            if (depth < stack.Length) stack[depth] = default(SensorCandidate);
+                            pending = PendingField.None;
+                            break;
+
+                        case JsonTokenType.EndObject:
+                        {
+                            if (depth >= 0 && depth < stack.Length)
+                            {
+                                ref SensorCandidate c = ref stack[depth];
+                                if (c.SensorId != null)
+                                {
+                                    var vals = new Dictionary<string, double>(3, StringComparer.OrdinalIgnoreCase);
+                                    if (TryParseValue(c.Value, out double v))  vals["value"] = v;
+                                    if (TryParseValue(c.Min,   out double mn)) vals["min"]   = mn;
+                                    if (TryParseValue(c.Max,   out double mx)) vals["max"]   = mx;
+                                    cache[c.SensorId] = vals;
+                                }
+                            }
+                            depth--;
+                            pending = PendingField.None;
+                            break;
+                        }
+
+                        case JsonTokenType.PropertyName:
+                            if (depth >= 0 && depth < stack.Length)
+                            {
+                                if      (reader.ValueTextEquals("SensorId")) pending = PendingField.SensorId;
+                                else if (reader.ValueTextEquals("Value"))    pending = PendingField.Value;
+                                else if (reader.ValueTextEquals("Min"))      pending = PendingField.Min;
+                                else if (reader.ValueTextEquals("Max"))      pending = PendingField.Max;
+                                else                                          pending = PendingField.None;
+                            }
+                            break;
+
+                        case JsonTokenType.String:
+                        {
+                            if (pending != PendingField.None && depth >= 0 && depth < stack.Length)
+                            {
+                                ref SensorCandidate c = ref stack[depth];
+                                string val = reader.GetString();
+                                switch (pending)
+                                {
+                                    case PendingField.SensorId: c.SensorId = val; break;
+                                    case PendingField.Value:    c.Value    = val; break;
+                                    case PendingField.Min:      c.Min      = val; break;
+                                    case PendingField.Max:      c.Max      = val; break;
+                                }
+                                pending = PendingField.None;
+                            }
+                            break;
+                        }
+
+                        default:
+                            pending = PendingField.None;
+                            break;
+                    }
+                }
+
+                // Carry unconsumed bytes forward into the next read.
+                state = reader.CurrentState;
+                int consumed = (int)reader.BytesConsumed;
+                leftoverLen = totalBytes - consumed;
+                if (leftoverLen > 0)
+                    Array.Copy(buf, consumed, buf, 0, leftoverLen);
+
+                if (isFinalBlock) break;
+            }
+
+            return cache;
+        }
+
+        private struct SensorCandidate { public string SensorId, Value, Min, Max; }
+        private enum PendingField : byte { None, SensorId, Value, Min, Max }
 
         // Maps an LHM ImageURL (e.g. "images_icon/gpu-amd.png") to the equivalent
         // WMI HardwareType name (e.g. "GpuAmd") so that skins ported from the WMI
